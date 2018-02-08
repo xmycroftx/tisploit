@@ -6,9 +6,9 @@ import requests
 # this script, attempts to use the timing variation in real users and nonuser 
 # inputs to an http basic auth interface.
 
-# The premise is, find an oracle (in this case we use Administrator) and use the 
-# Aggregate response time as the baseline.  We create an example administrator
-# user for the purposes of this test.
+# The premise is, find an oracle (in this case we use garbage) and use the 
+# Aggregate response time as the baseline.  We make sure garbage doesn't exist
+# as a user for the purposes of this test.
 
 # The script currently takes a single input ala: './basicauth.py username'
 
